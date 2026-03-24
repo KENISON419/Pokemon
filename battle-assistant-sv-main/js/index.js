@@ -77,7 +77,7 @@ class PokemonBattleAssistant {
             this.recognizeEnemy = this.#appStorage.getItem('recognize-enemy');
         }
         if (this.#appStorage.includes('template-length')) {
-            this.templateLength = this.#appStorage.getItem('template-length');
+            this.templateLength = Math.max(1, Number.parseInt(this.#appStorage.getItem('template-length'), 10) || this.templateLength);
         }
         if (this.#appStorage.includes('guide-selection')) {
             this.guideSelection = this.#appStorage.getItem('guide-selection');
@@ -1232,7 +1232,7 @@ class PokemonBattleAssistant {
                 // 相手ポケモンの検索範囲
                 subwin.document.getElementById('template-length').value = this.templateLength;
                 subwin.document.getElementById('template-length').addEventListener('change', event => {
-                    this.templateLength = event.currentTarget.value;
+                    this.templateLength = Math.max(1, Number.parseInt(event.currentTarget.value, 10) || this.templateLength);
                     this.save();
                     // 設定が変わったら相手のパーティをクリア
                     if (this.currentPhase() == 'MATCHING') {
@@ -1405,6 +1405,11 @@ class PokemonBattleAssistant {
     */
     // 相手パーティを読み取る
     async readEnemy() {
+        const templateLength = Math.max(1, Number.parseInt(this.templateLength, 10) || 300);
+        const usageRankedNames = Object.keys(Pokemon.battleData);
+        const fallbackNames = Object.keys(Pokemon.templateFileCode)
+            .filter((name) => !(name in Pokemon.battleData));
+        const names = usageRankedNames.concat(fallbackNames).slice(0, templateLength);
         for (let i=0; i<6; i++) {
             if (!this.recognizeEnemy[i] || this.currentPhase() != 'MATCHING') {
                 continue;
@@ -1415,14 +1420,18 @@ class PokemonBattleAssistant {
             const border = rectBorder(this.trimCanvas, this.ENEMY_ICON_TRIM_BORDER);
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
-            // ポケモン名の検索元
-            let names = Object.keys(Pokemon.battleData).slice(0, this.templateLength);
-            let maxCorerlation = 0;
+            let maxCorerlation = -Infinity;
             let mostLikely = '';
             let comparedTemplates = 0;
             for (let name of names) {
                 try {
-                    const templateCode = Pokemon.templateFileCode[name];
+                    let templateCode = Pokemon.templateFileCode[name];
+                    if (!templateCode && name in Pokemon.zukan) {
+                        templateCode = Pokemon.templateFileCode[Pokemon.zukan[name].displayName];
+                    }
+                    if (!templateCode && name.includes('(')) {
+                        templateCode = Pokemon.templateFileCode[name.split('(')[0]];
+                    }
                     if (!templateCode) {
                         continue;
                     }
@@ -1441,8 +1450,8 @@ class PokemonBattleAssistant {
                         mostLikely = name;
                     }    
                 } catch (e) {
-                    console.log(name)
-                    console.error(`${e.name}: ${e.message}`);
+                    const errorText = (e && e.name && e.message) ? `${e.name}: ${e.message}` : `${e}`;
+                    console.error(`Enemy template matching failed [${name}]: ${errorText}`);
                 }
             }
             // フォルムチェンジ対応
