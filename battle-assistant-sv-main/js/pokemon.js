@@ -260,10 +260,20 @@ export class Pokemon {
             const data = await response.text();
             let lines = data.split(NEW_LINE_CODE);
             lines.shift();
+            const dexNumPattern = /^\d{3,4}(?:-\d{3})?$/;
             for (let line of lines) {
                 const words = line.split('\t');
-                const name = words[1];
-                if (name == undefined || name == '') { break; }
+                if (words.length < 2) { continue; }
+                let name = words[1];
+                // zukan.txt の列順差分(Name/Num 入れ替え)に対応
+                if (name == undefined || name == '' || dexNumPattern.test(name)) {
+                    if (words[0] && !dexNumPattern.test(words[0])) {
+                        name = words[0];
+                    } else {
+                        name = words.find((word, i) => i < 4 && word && !dexNumPattern.test(word) && word != '-') || '';
+                    }
+                }
+                if (!name) { continue; }
                 Pokemon.zukan[name] = {};
                 Pokemon.zukan[name]['type'] = words.slice(2,4).filter(function(s) { return s != '-'; });
                 Pokemon.zukan[name]['ability'] = words.slice(4,8).filter(function(s) { return s != '-'; });
