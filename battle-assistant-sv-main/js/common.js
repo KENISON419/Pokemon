@@ -51,7 +51,7 @@ export async function loadImage(url) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
-        img.onerror = (e) => reject(e);
+        img.onerror = () => reject(new Error(`画像を読み込めませんでした: ${url}`));
         img.src = url;
     });
 }

@@ -1445,8 +1445,13 @@ class PokemonBattleAssistant {
             let maxCorerlation = 0;
             let mostLikely = '';
             for (let name of names) {
+                const templateCode = Pokemon.templateFileCode[name];
+                if (!templateCode) {
+                    continue;
+                }
                 try {
-                    const img = await loadImage(`data/template/${Pokemon.templateFileCode[name]}.png`);
+                    const templatePath = `data/template/${templateCode}.png`;
+                    const img = await loadImage(templatePath);
                     const dsize = (img.width >= img.height) ?
                         [border.w, Math.trunc(border.w*img.height/img.width)] :
                         [Math.trunc(border.h*img.width/img.height), border.h];
@@ -1464,8 +1469,9 @@ class PokemonBattleAssistant {
                         mostLikely = name;
                     }    
                 } catch (e) {
-                    console.log(name)
-                    console.error(`${e.name}: ${e.message}`);
+                    const errorName = e?.name ?? 'TemplateLoadError';
+                    const errorMessage = e?.message ?? `failed to load template image (${name}: ${templateCode})`;
+                    console.error(`${errorName}: ${errorMessage}`);
                 }
             }
             // フォルムチェンジ対応
