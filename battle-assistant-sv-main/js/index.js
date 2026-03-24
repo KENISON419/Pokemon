@@ -1427,12 +1427,26 @@ class PokemonBattleAssistant {
             // ポケモン名の検索元
             // 1) 現シーズンの使用率が高い順
             // 2) 1)で見つからない場合は、残りのテンプレートを全探索
-            const battleDataNames = Object.keys(Pokemon.battleData)
-                .filter((name) => name in Pokemon.templateFileCode);
+            const battleDataNames = [];
+            const addedNames = new Set();
+            Object.keys(Pokemon.battleData).forEach((name) => {
+                let mappedNames = [];
+                if (name in Pokemon.templateFileCode) {
+                    mappedNames = [name];
+                } else if (name in Pokemon.zukanName) {
+                    mappedNames = Pokemon.zukanName[name].filter((zukanName) => zukanName in Pokemon.templateFileCode);
+                }
+                mappedNames.forEach((mappedName) => {
+                    if (!addedNames.has(mappedName)) {
+                        battleDataNames.push(mappedName);
+                        addedNames.add(mappedName);
+                    }
+                });
+            });
             const highUsageNames = battleDataNames.slice(0, this.templateLength);
             const remainingBattleDataNames = battleDataNames.slice(this.templateLength);
             const fallbackTemplateNames = Object.keys(Pokemon.templateFileCode)
-                .filter((name) => !(name in Pokemon.battleData));
+                .filter((name) => !addedNames.has(name));
             const candidateNameGroups = [highUsageNames, remainingBattleDataNames.concat(fallbackTemplateNames)];
             let maxCorerlation = 0;
             let mostLikely = '';
@@ -1445,9 +1459,11 @@ class PokemonBattleAssistant {
                             continue;
                         }
                         const img = await loadImage(`data/template/${templateCode}.png`);
-                        const dsize = (img.width >= img.height) ?
-                            [Math.max(1, border.w), Math.max(1, Math.trunc(border.w*img.height/img.width))] :
-                            [Math.max(1, Math.trunc(border.h*img.width/img.height)), Math.max(1, border.h)];
+                        const scale = Math.min(border.w/img.width, border.h/img.height);
+                        const dsize = [
+                            Math.max(1, Math.min(border.w, Math.trunc(img.width*scale))),
+                            Math.max(1, Math.min(border.h, Math.trunc(img.height*scale)))
+                        ];
                         this.templCanvas.width = dsize[0];
                         this.templCanvas.height = dsize[1];
                         this.templCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height, 0, 0, dsize[0], dsize[1]);
@@ -1459,9 +1475,11 @@ class PokemonBattleAssistant {
                             mostLikely = name;
                         }
                     } catch (e) {
-                        const errorName = e?.name ?? typeof e;
-                        const errorMessage = e?.message ?? String(e);
-                        console.error(`[readEnemy] ${name}: ${errorName}: ${errorMessage}`);
+                        if (typeof e !== 'number') {
+                            const errorName = e?.name ?? typeof e;
+                            const errorMessage = e?.message ?? String(e);
+                            console.error(`[readEnemy] ${name}: ${errorName}: ${errorMessage}`);
+                        }
                     }
                 }
             }
