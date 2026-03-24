@@ -1,0 +1,121 @@
+body.integration-launch-page {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0b1020, #1b2c4b 60%, #4f6ef7);
+    color: #f5f8ff;
+    font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+}
+
+.integration-launch-shell {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px;
+}
+
+.launch-actions {
+    margin-top: 24px;
+}
+
+.launch-button {
+    display: inline-block;
+    padding: 14px 22px;
+    border-radius: 999px;
+    background: #8ec5ff;
+    color: #0b1020;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+#pokechamp-integration-root {
+    position: fixed;
+    top: 76px;
+    right: 12px;
+    width: 360px;
+    max-height: calc(100vh - 88px);
+    overflow: auto;
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(12, 18, 30, 0.92);
+    color: #eef3ff;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+}
+
+#pokechamp-integration-root h2,
+#pokechamp-integration-root h3,
+#pokechamp-integration-root p,
+#pokechamp-integration-root li {
+    margin-top: 0;
+}
+
+.integration-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.integration-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.integration-card {
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.integration-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.integration-list li {
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.integration-inline-label {
+    display: inline-block;
+    min-width: 72px;
+    color: #8ec5ff;
+    font-weight: 600;
+}
+
+.integration-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.integration-actions button {
+    flex: 1;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 700;
+    color: #0b1020;
+    background: #b5d3ff;
+    cursor: pointer;
+}
+
+.integration-status-ok {
+    color: #89f0a8;
+}
+
+.integration-status-warn {
+    color: #ffd36f;
+}
+
+.integration-status-error {
+    color: #ff8f8f;
+}
