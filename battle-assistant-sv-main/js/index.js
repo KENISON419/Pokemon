@@ -163,9 +163,12 @@ class PokemonBattleAssistant {
         }
         this.#battle = new Battle(new Pokemon(), new Pokemon());
         // comboboxの初期化
+        const pokemonNameOptions = Array.from(new Set(
+            Object.keys(Pokemon.zukan).concat(Object.keys(Pokemon.battleData).filter(name => name in Pokemon.zukan))
+        )).sort();
         document.querySelectorAll('.name').forEach((combobox, i) => {
             this.#cbName.push(createCombobox(combobox));
-            this.#cbName[i].addOptions(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)));
+            this.#cbName[i].addOptions(pokemonNameOptions);
         });
         document.querySelectorAll('.nature').forEach((combobox, i) => {
             this.#cbNature.push(createCombobox(combobox));
@@ -187,12 +190,12 @@ class PokemonBattleAssistant {
             this.#cbMove[i].addOptions(Object.keys(Pokemon.moves).sort());
         });
         document.querySelectorAll('.enemy-name').forEach(combobox => {
-            createCombobox(combobox).addOptions(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)));
+            createCombobox(combobox).addOptions(pokemonNameOptions);
         });
         this.#cbFilterNickname = createCombobox(document.getElementById('filter-nickname'));
-        this.#cbFilterNickname.addOptions(Array.from(new Set(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)))));
+        this.#cbFilterNickname.addOptions(pokemonNameOptions);
         this.#cbFilterName = createCombobox(document.getElementById('filter-name'));
-        this.#cbFilterName.addOptions(Array.from(new Set(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)))));
+        this.#cbFilterName.addOptions(pokemonNameOptions);
         this.#cbFilterType = createCombobox(document.getElementById('filter-type'));
         this.#cbFilterType.addOptions(Object.keys(Pokemon.typeID));
         this.#cbFilterAbility = createCombobox(document.getElementById('filter-ability'));
