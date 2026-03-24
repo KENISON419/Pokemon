@@ -163,12 +163,9 @@ class PokemonBattleAssistant {
         }
         this.#battle = new Battle(new Pokemon(), new Pokemon());
         // comboboxの初期化
-        const pokemonNameOptions = Array.from(new Set(
-            Object.keys(Pokemon.zukan).concat(Object.keys(Pokemon.battleData).filter(name => name in Pokemon.zukan))
-        )).sort();
         document.querySelectorAll('.name').forEach((combobox, i) => {
             this.#cbName.push(createCombobox(combobox));
-            this.#cbName[i].addOptions(pokemonNameOptions);
+            this.#cbName[i].addOptions(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)));
         });
         document.querySelectorAll('.nature').forEach((combobox, i) => {
             this.#cbNature.push(createCombobox(combobox));
@@ -190,12 +187,12 @@ class PokemonBattleAssistant {
             this.#cbMove[i].addOptions(Object.keys(Pokemon.moves).sort());
         });
         document.querySelectorAll('.enemy-name').forEach(combobox => {
-            createCombobox(combobox).addOptions(pokemonNameOptions);
+            createCombobox(combobox).addOptions(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)));
         });
         this.#cbFilterNickname = createCombobox(document.getElementById('filter-nickname'));
-        this.#cbFilterNickname.addOptions(pokemonNameOptions);
+        this.#cbFilterNickname.addOptions(Array.from(new Set(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)))));
         this.#cbFilterName = createCombobox(document.getElementById('filter-name'));
-        this.#cbFilterName.addOptions(pokemonNameOptions);
+        this.#cbFilterName.addOptions(Array.from(new Set(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)))));
         this.#cbFilterType = createCombobox(document.getElementById('filter-type'));
         this.#cbFilterType.addOptions(Object.keys(Pokemon.typeID));
         this.#cbFilterAbility = createCombobox(document.getElementById('filter-ability'));
@@ -316,28 +313,16 @@ class PokemonBattleAssistant {
         let names = Object.keys(Pokemon.battleData);
         document.querySelectorAll('#balance-check-main .trend').forEach(elem => {
             // ポケモン
-            let name = '';
-            while (names.length) {
-                name = names.shift();
-                if (!(name in Pokemon.battleData) || !(name in Pokemon.zukan)) { continue; }
-                if (name.includes('オーガポン')) {
-                    let ability = Pokemon.zukan[name].ability[0];
-                    let ind = Pokemon.battleData[name].ability[0].indexOf(ability);
-                    if (Pokemon.battleData[name].ability[1][ind] < this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
-                        continue;
-                    }
+            let name = names.shift();
+            if (name.includes('オーガポン')) {
+                let ability = Pokemon.zukan[name].ability[0];
+                let ind = Pokemon.battleData[name].ability[0].indexOf(ability);
+                if (Pokemon.battleData[name].ability[1][ind] < this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
+                    name = names.shift();
                 }
-                if (!Pokemon.battleData[name].item || !Pokemon.battleData[name].Ttype || !Pokemon.battleData[name].move) { continue; }
-                break;
             }
             let elem2 = elem.querySelector('.trend-pokemon')
-            if (!name) {
-                elem.style.display = 'none';
-                return;
-            }
-            elem2.src = (Pokemon.iconFileCode[name])
-                ? `data/icon/${Pokemon.iconFileCode[name]}.png`
-                : `data/item_img/${Pokemon.itemFileCode['モンスターボール']}.png`;
+            elem2.src = `data/icon/${Pokemon.iconFileCode[name]}.png`;
             // 注釈
             setAnnotation(elem2);
             elem2.addEventListener('mousemove', () => {
@@ -350,14 +335,10 @@ class PokemonBattleAssistant {
                 });
                 document.getElementById('annotation').innerHTML = annotation.join('<br>');
             });
-            let itemNames = (Array.isArray(Pokemon.battleData[name].item) && Array.isArray(Pokemon.battleData[name].item[0]))
-                ? Pokemon.battleData[name].item[0] : [];
-            let itemRates = (Array.isArray(Pokemon.battleData[name].item) && Array.isArray(Pokemon.battleData[name].item[1]))
-                ? Pokemon.battleData[name].item[1] : [];
             // 持ち物
             elem.querySelectorAll('.trend-item1, .trend-item2, .trend-item3').forEach((elem2, i) => {
-                if (i < itemNames.length && itemRates[i] >= this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
-                    elem2.src = `data/item_img/${Pokemon.itemFileCode[itemNames[i]]}.png`;
+                if (i < Pokemon.battleData[name].item[0].length && Pokemon.battleData[name].item[1][i] >= this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
+                    elem2.src = `data/item_img/${Pokemon.itemFileCode[Pokemon.battleData[name].item[0][i]]}.png`;
                     elem2.style.opacity = 1;
                 } else {
                     elem2.src = '';
@@ -366,19 +347,15 @@ class PokemonBattleAssistant {
                 // 注釈
                 setAnnotation(elem2);
                 elem2.addEventListener('mousemove', () => {
-                    let annotation = (i < itemRates.length) ? `${Math.trunc(itemRates[i])}%` : '-';
+                    let annotation = `${Math.trunc(Pokemon.battleData[name].item[1][i])}%`;
                     document.getElementById('annotation').innerHTML = annotation;
                 });
             });
-            let ttypeNames = (Array.isArray(Pokemon.battleData[name].Ttype) && Array.isArray(Pokemon.battleData[name].Ttype[0]))
-                ? Pokemon.battleData[name].Ttype[0] : [];
-            let ttypeRates = (Array.isArray(Pokemon.battleData[name].Ttype) && Array.isArray(Pokemon.battleData[name].Ttype[1]))
-                ? Pokemon.battleData[name].Ttype[1] : [];
             // テラスタイプ
             elem.querySelectorAll('.trend-Ttype1, .trend-Ttype2, .trend-Ttype3').forEach((elem2, i) => {
                 setAnnotation(elem2);
-                if (i < ttypeNames.length && ttypeRates[i] >= this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
-                    elem2.src = `data/type_img/${Pokemon.typeFileCode[ttypeNames[i]]}.png`;
+                if (i < Pokemon.battleData[name].Ttype[0].length && Pokemon.battleData[name].Ttype[1][i] >= this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
+                    elem2.src = `data/type_img/${Pokemon.typeFileCode[Pokemon.battleData[name].Ttype[0][i]]}.png`;
                     elem2.style.opacity = 1;
                 } else {
                     elem2.src = '';
@@ -387,7 +364,7 @@ class PokemonBattleAssistant {
                 // 注釈
                 setAnnotation(elem2);
                 elem2.addEventListener('mousemove', () => {
-                    let annotation = (i < ttypeRates.length) ? `${Math.trunc(ttypeRates[i])}%` : '-';
+                    let annotation = `${Math.trunc(Pokemon.battleData[name].Ttype[1][i])}%`;
                     document.getElementById('annotation').innerHTML = annotation;
                 });
             });
@@ -2404,74 +2381,10 @@ class PokemonBattleAssistant {
             elem.src = `data/type_img/${Pokemon.typeFileCode[Object.keys(typeWeight)[i]]}.png`;
         });
     }
-    getIntegrationSnapshot() {
-        const clonePokemon = (pokemon) => {
-            if (!pokemon) {
-                return null;
-            }
-            return JSON.parse(JSON.stringify({
-                name: pokemon.name,
-                nickname: pokemon.nickname,
-                displayName: pokemon.displayName,
-                level: pokemon.level,
-                sex: pokemon.sex,
-                nature: pokemon.nature,
-                type: pokemon.type,
-                ability: pokemon.ability,
-                item: pokemon.item,
-                Ttype: pokemon.Ttype,
-                status: pokemon.status,
-                indiv: pokemon.indiv,
-                effort: pokemon.effort,
-                move: pokemon.move,
-                rank: pokemon.rank,
-                ailment: pokemon.ailment,
-                terastal: pokemon.terastal,
-                oikaze: pokemon.oikaze,
-                hasItem: pokemon.hasItem,
-                hp: pokemon.hp,
-                selected: pokemon.selected,
-                description: pokemon.description,
-            }));
-        };
-        const readDamageRows = (selector) => {
-            return Array.from(document.querySelectorAll(selector)).map((elem) => ({
-                move: elem.querySelector('.attack-move')?.textContent?.trim() ||
-                    elem.querySelector('.defence-move span:first-child')?.textContent?.trim() || '',
-                values: Array.from(elem.querySelectorAll('span'))
-                    .map((node) => node.textContent.trim())
-                    .filter(Boolean),
-            }));
-        };
-        return {
-            phase: this.currentPhase(),
-            startTime: this.startTime,
-            fieldPokemonIndex: this.#fieldPokemonIndex,
-            fieldEnemyIndex: this.#fieldEnemyIndex,
-            enemyHPratio: [...this.#enemyHPratio],
-            recognizeHP: this.recognizeHP,
-            recognizeEnemyHP: this.recognizeEnemyHP,
-            guideSelection: this.guideSelection,
-            weather: this.#battle.weather,
-            field: this.#battle.field,
-            attackSide: this.#battle.attackSide,
-            currentPokemon: clonePokemon(this.#battle.pokemon[0]),
-            currentEnemy: clonePokemon(this.#battle.pokemon[1]),
-            party: this.#party.map((pokemon) => clonePokemon(pokemon)),
-            enemy: this.#enemy.map((pokemon) => clonePokemon(pokemon)),
-            ui: {
-                attackRows: readDamageRows('.attack-damage-box'),
-                defenceRows: readDamageRows('.defence-damage-box'),
-            },
-            timestamp: new Date().toISOString(),
-        };
-    }
 }
 // main
 (async () => {
     const app = new PokemonBattleAssistant();
-    window.pbaApp = app;
-    window.dispatchEvent(new CustomEvent('pba-ready', { detail: app }));
     if (DEBUG) {
         await drawImage({canvas:app.captureCanvas, url:'log/matching.png', fitToCanvas:true});
         //await drawImage({canvas:app.captureCanvas, url:'log/battle.png', fitToCanvas:true});
