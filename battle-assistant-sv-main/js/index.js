@@ -65,6 +65,23 @@ class PokemonBattleAssistant {
     #cbFilterTtype;
     #cbFilterMove;
 
+    normalizePokemonName(name) {
+        if (name in Pokemon.zukan) { return name; }
+        if (/^\d{1,4}-\d{3}$/.test(name)) {
+            const [dexNo, formNo] = name.split('-').map((s) => String(parseInt(s, 10)));
+            if (dexNo in Pokemon.nameCode) {
+                const codeData = Pokemon.nameCode[dexNo];
+                if (formNo in codeData) {
+                    return codeData[formNo];
+                }
+                if ('0' in codeData) {
+                    return codeData['0'];
+                }
+            }
+        }
+        return name;
+    }
+
     constructor() {
         console.log('PokemonBattleAssistantを初期化中...');
         this.#appStorage = new Storage('battleAssistant');
@@ -162,10 +179,16 @@ class PokemonBattleAssistant {
             this.#enemy[i] = new Pokemon();
         }
         this.#battle = new Battle(new Pokemon(), new Pokemon());
+        const pokemonNameOptions = Array.from(new Set(
+            Object.keys(Pokemon.battleData)
+                .map((name) => this.normalizePokemonName(name))
+                .filter((name) => name in Pokemon.zukan)
+                .concat(Object.keys(Pokemon.zukan))
+        ));
         // comboboxの初期化
         document.querySelectorAll('.name').forEach((combobox, i) => {
             this.#cbName.push(createCombobox(combobox));
-            this.#cbName[i].addOptions(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)));
+            this.#cbName[i].addOptions(pokemonNameOptions);
         });
         document.querySelectorAll('.nature').forEach((combobox, i) => {
             this.#cbNature.push(createCombobox(combobox));
@@ -187,12 +210,12 @@ class PokemonBattleAssistant {
             this.#cbMove[i].addOptions(Object.keys(Pokemon.moves).sort());
         });
         document.querySelectorAll('.enemy-name').forEach(combobox => {
-            createCombobox(combobox).addOptions(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)));
+            createCombobox(combobox).addOptions(pokemonNameOptions);
         });
         this.#cbFilterNickname = createCombobox(document.getElementById('filter-nickname'));
-        this.#cbFilterNickname.addOptions(Array.from(new Set(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)))));
+        this.#cbFilterNickname.addOptions(pokemonNameOptions);
         this.#cbFilterName = createCombobox(document.getElementById('filter-name'));
-        this.#cbFilterName.addOptions(Array.from(new Set(Object.keys(Pokemon.battleData).concat(Object.keys(Pokemon.zukan)))));
+        this.#cbFilterName.addOptions(pokemonNameOptions);
         this.#cbFilterType = createCombobox(document.getElementById('filter-type'));
         this.#cbFilterType.addOptions(Object.keys(Pokemon.typeID));
         this.#cbFilterAbility = createCombobox(document.getElementById('filter-ability'));
@@ -1411,7 +1434,14 @@ class PokemonBattleAssistant {
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
             // ポケモン名の検索元
-            let names = Object.keys(Pokemon.battleData).slice(0, this.templateLength);
+            let names = Array.from(new Set(
+                Object.keys(Pokemon.battleData)
+                    .map((name) => this.normalizePokemonName(name))
+                    .filter((name) => name in Pokemon.templateFileCode)
+            )).slice(0, this.templateLength);
+            if (!names.length) {
+                names = Object.keys(Pokemon.templateFileCode).slice(0, this.templateLength);
+            }
             let maxCorerlation = 0;
             let mostLikely = '';
             for (let name of names) {

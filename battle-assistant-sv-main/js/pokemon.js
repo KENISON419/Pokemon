@@ -86,6 +86,7 @@ export class Pokemon {
     static itemFileCode = {}; // アイテム画像のデコード表
     static iconFileCode = {}; // アイコン画像のデコード表
     static templateFileCode = {}; // テンプレート画像のデコード表
+    static nameCode = {}; // ポケモン名コード表
 
     static foreignNames = {}; // key: ポケモン表示名, value: 外国語名
     
@@ -180,6 +181,7 @@ export class Pokemon {
             'data/combo_move.txt',
             'data/nature.txt',
             'data/type.txt',
+            'data/codelist/nameCode.json',
             `data/battle_data/season${season}.json`,
         ]
         const responses = await Promise.all(urls.map(url => fetch(url)));
@@ -501,6 +503,16 @@ export class Pokemon {
         } catch(e) {
             console.error(`${e.name}: ${e.message}`);
         }
+        // ポケモン名コードの読み込み
+        try {
+            const response = responses.shift();
+            if (!response.ok) {
+                throw new Error(`response.status = ${response.status}, response.statusText = ${response.statusText}`);
+            }
+            Pokemon.nameCode = JSON.parse(await response.text());
+        } catch(e) {
+            console.error(`${e.name}: ${e.message}`);
+        }
         // タイプ色
         this.typeColor['ノーマル'] = '#666666';
         this.typeColor['ほのお'] = '#ff6600';
@@ -535,7 +547,21 @@ export class Pokemon {
             }
             const data = await response.text();
             let adoption = JSON.parse(data);
-            for (let name in adoption) {
+            for (let key in adoption) {
+                let name = key;
+                // ポケモンコード(例: 1003-000)を図鑑名に変換
+                if (!(name in Pokemon.zukan) && /^\d{1,4}-\d{3}$/.test(name)) {
+                    const [dexNo, formNo] = name.split('-').map((s) => String(parseInt(s, 10)));
+                    if (dexNo in Pokemon.nameCode) {
+                        const codeData = Pokemon.nameCode[dexNo];
+                        if (formNo in codeData) {
+                            name = codeData[formNo];
+                        } else if ('0' in codeData) {
+                            name = codeData['0'];
+                        }
+                    }
+                }
+                if (!(name in Pokemon.templateFileCode)) { continue; }
                 let names = [name]
                 // フォルム違いにも適用
                 switch (name) {
@@ -564,10 +590,10 @@ export class Pokemon {
                 }
                 for (let s of names) {
                     Pokemon.battleData[s] = {};
-                    Pokemon.battleData[s]['move'] = adoption[name]['move'];
-                    Pokemon.battleData[s]['ability'] = adoption[name]['ability'];
-                    Pokemon.battleData[s]['item'] = adoption[name]['item'];
-                    Pokemon.battleData[s]['Ttype'] = adoption[name]['Ttype'];
+                    Pokemon.battleData[s]['move'] = adoption[key]['move'];
+                    Pokemon.battleData[s]['ability'] = adoption[key]['ability'];
+                    Pokemon.battleData[s]['item'] = adoption[key]['item'];
+                    Pokemon.battleData[s]['Ttype'] = adoption[key]['Ttype'];
                 }
             }
             //console.log(Object.keys(Pokemon.battleData));
