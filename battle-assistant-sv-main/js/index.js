@@ -1422,25 +1422,11 @@ class PokemonBattleAssistant {
             let comparedTemplates = 0;
             for (let name of names) {
                 try {
-                    const codeCandidates = Array.from(new Set([
-                        Pokemon.templateFileCode[name],
-                        Pokemon.iconFileCode[name],
-                    ].filter((code) => code)));
-                    if (!codeCandidates.length) {
+                    const templateCode = Pokemon.templateFileCode[name] || Pokemon.iconFileCode[name];
+                    if (!templateCode) {
                         continue;
                     }
-                    let img;
-                    for (const code of codeCandidates) {
-                        try {
-                            img = await loadImage(`data/template/${code}.png`);
-                            break;
-                        } catch (_error) {
-                            // 次の候補コードで再試行
-                        }
-                    }
-                    if (!img) {
-                        continue;
-                    }
+                    const img = await loadImage(`data/template/${templateCode}.png`);
                     const dsize = (img.width >= img.height) ?
                         [Math.max(1, border.w), Math.max(1, Math.trunc(border.w*img.height/img.width))] :
                         [Math.max(1, Math.trunc(border.h*img.width/img.height)), Math.max(1, border.h)];
