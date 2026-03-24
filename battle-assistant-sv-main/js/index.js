@@ -65,6 +65,23 @@ class PokemonBattleAssistant {
     #cbFilterTtype;
     #cbFilterMove;
 
+    normalizePokemonName(name) {
+        if (name in Pokemon.zukan) { return name; }
+        if (/^\d{1,4}-\d{3}$/.test(name)) {
+            const [dexNo, formNo] = name.split('-').map((s) => String(parseInt(s, 10)));
+            if (dexNo in Pokemon.nameCode) {
+                const codeData = Pokemon.nameCode[dexNo];
+                if (formNo in codeData) {
+                    return codeData[formNo];
+                }
+                if ('0' in codeData) {
+                    return codeData['0'];
+                }
+            }
+        }
+        return name;
+    }
+
     constructor() {
         console.log('PokemonBattleAssistantを初期化中...');
         this.#appStorage = new Storage('battleAssistant');
@@ -164,6 +181,7 @@ class PokemonBattleAssistant {
         this.#battle = new Battle(new Pokemon(), new Pokemon());
         const pokemonNameOptions = Array.from(new Set(
             Object.keys(Pokemon.battleData)
+                .map((name) => this.normalizePokemonName(name))
                 .filter((name) => name in Pokemon.zukan)
                 .concat(Object.keys(Pokemon.zukan))
         ));
@@ -1416,9 +1434,11 @@ class PokemonBattleAssistant {
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
             // ポケモン名の検索元
-            let names = Object.keys(Pokemon.battleData)
-                .filter((name) => name in Pokemon.templateFileCode)
-                .slice(0, this.templateLength);
+            let names = Array.from(new Set(
+                Object.keys(Pokemon.battleData)
+                    .map((name) => this.normalizePokemonName(name))
+                    .filter((name) => name in Pokemon.templateFileCode)
+            )).slice(0, this.templateLength);
             if (!names.length) {
                 names = Object.keys(Pokemon.templateFileCode).slice(0, this.templateLength);
             }
