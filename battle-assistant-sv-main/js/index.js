@@ -319,6 +319,7 @@ class PokemonBattleAssistant {
         document.querySelectorAll('#balance-check-main .trend').forEach(elem => {
             // ポケモン
             let name = '';
+            let found = false;
             while (names.length) {
                 name = names.shift();
                 if (!(name in Pokemon.battleData) || !(name in Pokemon.zukan)) { continue; }
@@ -330,8 +331,10 @@ class PokemonBattleAssistant {
                     }
                 }
                 if (!Pokemon.battleData[name].item || !Pokemon.battleData[name].Ttype || !Pokemon.battleData[name].move) { continue; }
+                found = true;
                 break;
             }
+            if (!found) { name = ''; }
             let elem2 = elem.querySelector('.trend-pokemon')
             if (!name) {
                 elem.style.display = 'none';
@@ -359,8 +362,14 @@ class PokemonBattleAssistant {
             // 持ち物
             elem.querySelectorAll('.trend-item1, .trend-item2, .trend-item3').forEach((elem2, i) => {
                 if (i < itemNames.length && itemRates[i] >= this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
-                    elem2.src = `data/item_img/${Pokemon.itemFileCode[itemNames[i]]}.png`;
-                    elem2.style.opacity = 1;
+                    const fileCode = Pokemon.itemFileCode[itemNames[i]];
+                    if (fileCode) {
+                        elem2.src = `data/item_img/${fileCode}.png`;
+                        elem2.style.opacity = 1;
+                    } else {
+                        elem2.src = '';
+                        elem2.style.opacity = 0;
+                    }
                 } else {
                     elem2.src = '';
                     elem2.style.opacity = 0;
