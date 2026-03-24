@@ -678,10 +678,18 @@ class PokemonBattleAssistant {
     setEventListener() {
         for (let i=0; i<6; i++) {
             // ボックス画面からポケモンを読み取る処理のイベントリスナー
-            document.querySelectorAll('.img-pokemon img')[i].addEventListener('click', async () => {
+            const readBoxPokemon = async () => {
                 if (window.confirm('ボックスからポケモンを読み込みますか？')) {
                     await this.readBoxPokemon(i);
                     this.save();
+                }
+            };
+            const pokemonImg = document.querySelectorAll('.img-pokemon img')[i];
+            const pokemonImgWrapper = document.querySelectorAll('.img-pokemon')[i];
+            pokemonImg.addEventListener('click', readBoxPokemon);
+            pokemonImgWrapper.addEventListener('click', event => {
+                if (event.target === pokemonImgWrapper) {
+                    readBoxPokemon();
                 }
             });
             // ポケモン名が入力されたときのイベントリスナー
