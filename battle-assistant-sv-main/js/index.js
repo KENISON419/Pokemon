@@ -9,6 +9,49 @@ import { Storage } from './storage.js';
 import { createCombobox } from './combobox.js';
 import { ImageSelector } from './imageselect.js';
 
+
+
+function clonePokemonForIntegration(pokemon) {
+    if (!pokemon) {
+        return null;
+    }
+    return JSON.parse(JSON.stringify({
+        name: pokemon.name,
+        nickname: pokemon.nickname,
+        displayName: pokemon.displayName,
+        level: pokemon.level,
+        sex: pokemon.sex,
+        nature: pokemon.nature,
+        type: pokemon.type,
+        ability: pokemon.ability,
+        item: pokemon.item,
+        Ttype: pokemon.Ttype,
+        status: pokemon.status,
+        indiv: pokemon.indiv,
+        effort: pokemon.effort,
+        move: pokemon.move,
+        rank: pokemon.rank,
+        ailment: pokemon.ailment,
+        terastal: pokemon.terastal,
+        oikaze: pokemon.oikaze,
+        hasItem: pokemon.hasItem,
+        hp: pokemon.hp,
+        selected: pokemon.selected,
+        description: pokemon.description,
+    }));
+}
+
+function readDamageRowsForIntegration(selector) {
+    return Array.from(document.querySelectorAll(selector)).map((elem) => {
+        const moveLabel = elem.querySelector('.attack-move')?.textContent?.trim() ||
+            elem.querySelector('.defence-move span:first-child')?.textContent?.trim() || '';
+        const values = Array.from(elem.querySelectorAll('span'))
+            .map((node) => node.textContent.trim())
+            .filter(Boolean);
+        return { move: moveLabel, values };
+    });
+}
+
 class PokemonBattleAssistant {
     IS_INIT = false;
     FPS = 60; // キャプチャ画面のリフレッシュレート
@@ -2414,44 +2457,6 @@ class PokemonBattleAssistant {
         });
     }
     getIntegrationSnapshot() {
-        const clonePokemon = (pokemon) => {
-            if (!pokemon) {
-                return null;
-            }
-            return JSON.parse(JSON.stringify({
-                name: pokemon.name,
-                nickname: pokemon.nickname,
-                displayName: pokemon.displayName,
-                level: pokemon.level,
-                sex: pokemon.sex,
-                nature: pokemon.nature,
-                type: pokemon.type,
-                ability: pokemon.ability,
-                item: pokemon.item,
-                Ttype: pokemon.Ttype,
-                status: pokemon.status,
-                indiv: pokemon.indiv,
-                effort: pokemon.effort,
-                move: pokemon.move,
-                rank: pokemon.rank,
-                ailment: pokemon.ailment,
-                terastal: pokemon.terastal,
-                oikaze: pokemon.oikaze,
-                hasItem: pokemon.hasItem,
-                hp: pokemon.hp,
-                selected: pokemon.selected,
-                description: pokemon.description,
-            }));
-        };
-        const readDamageRows = (selector) => {
-            return Array.from(document.querySelectorAll(selector)).map((elem) => ({
-                move: elem.querySelector('.attack-move')?.textContent?.trim() ||
-                    elem.querySelector('.defence-move span:first-child')?.textContent?.trim() || '',
-                values: Array.from(elem.querySelectorAll('span'))
-                    .map((node) => node.textContent.trim())
-                    .filter(Boolean),
-            }));
-        };
         return {
             phase: this.currentPhase(),
             startTime: this.startTime,
@@ -2464,13 +2469,13 @@ class PokemonBattleAssistant {
             weather: this.#battle.weather,
             field: this.#battle.field,
             attackSide: this.#battle.attackSide,
-            currentPokemon: clonePokemon(this.#battle.pokemon[0]),
-            currentEnemy: clonePokemon(this.#battle.pokemon[1]),
-            party: this.#party.map((pokemon) => clonePokemon(pokemon)),
-            enemy: this.#enemy.map((pokemon) => clonePokemon(pokemon)),
+            currentPokemon: clonePokemonForIntegration(this.#battle.pokemon[0]),
+            currentEnemy: clonePokemonForIntegration(this.#battle.pokemon[1]),
+            party: this.#party.map((pokemon) => clonePokemonForIntegration(pokemon)),
+            enemy: this.#enemy.map((pokemon) => clonePokemonForIntegration(pokemon)),
             ui: {
-                attackRows: readDamageRows('.attack-damage-box'),
-                defenceRows: readDamageRows('.defence-damage-box'),
+                attackRows: readDamageRowsForIntegration('.attack-damage-box'),
+                defenceRows: readDamageRowsForIntegration('.defence-damage-box'),
             },
             timestamp: new Date().toISOString(),
         };
