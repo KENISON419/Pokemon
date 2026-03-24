@@ -346,6 +346,7 @@ class PokemonManager {
     }
 
     setName(name) {
+        name = Pokemon.resolveName(name);
         this.#pokemon = new Pokemon(name);
         let img = document.querySelector('#icon img');
         if (!(name in Pokemon.zukan)) {
