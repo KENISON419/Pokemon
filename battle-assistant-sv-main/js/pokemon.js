@@ -81,6 +81,7 @@ export class Pokemon {
     static zukanName = {}; // key: ポケモン表示名, value: 図鑑登録名
     static formDiff = {}; // key: ポケモン表示名, value: フォルム違いの差分
     static battleData = {}; // ランクマッチの統計データ
+    static battleDataOrder = []; // ランクマッチ使用率順のポケモン名
 
     static typeFileCode = {}; // タイプ画像のデコード表
     static itemFileCode = {}; // アイテム画像のデコード表
@@ -535,6 +536,7 @@ export class Pokemon {
             }
             const data = await response.text();
             let adoption = JSON.parse(data);
+            Pokemon.battleDataOrder = [];
             for (let name in adoption) {
                 let names = [name]
                 // フォルム違いにも適用
@@ -568,6 +570,7 @@ export class Pokemon {
                     Pokemon.battleData[s]['ability'] = adoption[name]['ability'];
                     Pokemon.battleData[s]['item'] = adoption[name]['item'];
                     Pokemon.battleData[s]['Ttype'] = adoption[name]['Ttype'];
+                    Pokemon.battleDataOrder.push(s);
                 }
             }
             //console.log(Object.keys(Pokemon.battleData));

@@ -1416,7 +1416,7 @@ class PokemonBattleAssistant {
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
             // ポケモン名の検索元
-            let names = Object.keys(Pokemon.battleData).filter((name) =>
+            let names = (Pokemon.battleDataOrder.length ? Pokemon.battleDataOrder : Object.keys(Pokemon.battleData)).filter((name) =>
                 Pokemon.templateFileCode[name] || Pokemon.iconFileCode[name]
             );
             if (!names.length) {
