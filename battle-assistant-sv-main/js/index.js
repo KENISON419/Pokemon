@@ -1416,7 +1416,13 @@ class PokemonBattleAssistant {
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
             // ポケモン名の検索元
-            let names = Object.keys(Pokemon.battleData).slice(0, this.templateLength);
+            let names = Object.keys(Pokemon.battleData).filter((name) =>
+                Pokemon.templateFileCode[name] || Pokemon.iconFileCode[name]
+            );
+            if (!names.length) {
+                names = Object.keys(Pokemon.templateFileCode);
+            }
+            names = names.slice(0, this.templateLength);
             let maxCorerlation = 0;
             let mostLikely = '';
             let comparedTemplates = 0;
@@ -1442,14 +1448,10 @@ class PokemonBattleAssistant {
                         continue;
                     }
                     const dsize = (img.width >= img.height) ?
-                        [border.w, Math.trunc(border.w*img.height/img.width)] :
-                        [Math.trunc(border.h*img.width/img.height), border.h];
-                    // 画像サイズが異なるものをあらかじめ排除する
-                    if (Math.abs(dsize[0]-border.w) > 5 || Math.abs(dsize[1]-border.h) > 5) {
-                        continue;
-                    }
-                    this.templCanvas.width = Math.max(1, dsize[0]);
-                    this.templCanvas.height = Math.max(1, dsize[1]);
+                        [Math.max(1, border.w), Math.max(1, Math.trunc(border.w*img.height/img.width))] :
+                        [Math.max(1, Math.trunc(border.h*img.width/img.height)), Math.max(1, border.h)];
+                    this.templCanvas.width = dsize[0];
+                    this.templCanvas.height = dsize[1];
                     this.templCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height, 0, 0, dsize[0], dsize[1]);
                     toGrayscale(this.templCanvas);
                     let result = templateMatch('canvas-trim', 'canvas-template');
@@ -1468,7 +1470,7 @@ class PokemonBattleAssistant {
                 mostLikely = 'イルカマン(マイティ)';
             }
             if (!mostLikely) {
-                console.warn(`Enemy[${i}] read failed: compared=${comparedTemplates}`);
+                console.warn(`Enemy[${i}] read failed: compared=${comparedTemplates}, candidates=${names.length}`);
                 document.querySelectorAll('.enemy-name input')[i].style.background = '#ffffff';
                 continue;
             }
