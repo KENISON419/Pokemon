@@ -81,6 +81,7 @@ export class Pokemon {
     static zukanName = {}; // key: ポケモン表示名, value: 図鑑登録名
     static formDiff = {}; // key: ポケモン表示名, value: フォルム違いの差分
     static battleData = {}; // ランクマッチの統計データ
+    static battleDataOrder = []; // ランクマッチの使用率順
 
     static typeFileCode = {}; // タイプ画像のデコード表
     static itemFileCode = {}; // アイテム画像のデコード表
@@ -523,6 +524,8 @@ export class Pokemon {
         this.typeColor['ステラ'] = this.typeColor['あく'];
         // ランクマッチの統計データの読み込み
         try {
+            Pokemon.battleData = {};
+            Pokemon.battleDataOrder = [];
             let response = responses.shift();
             if (!response.ok) {
                 // 読み込みに失敗した場合は前シーズンを参照する
@@ -568,6 +571,9 @@ export class Pokemon {
                     Pokemon.battleData[s]['ability'] = adoption[name]['ability'];
                     Pokemon.battleData[s]['item'] = adoption[name]['item'];
                     Pokemon.battleData[s]['Ttype'] = adoption[name]['Ttype'];
+                    if (!Pokemon.battleDataOrder.includes(s)) {
+                        Pokemon.battleDataOrder.push(s);
+                    }
                 }
             }
             //console.log(Object.keys(Pokemon.battleData));
