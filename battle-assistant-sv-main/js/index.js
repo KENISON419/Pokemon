@@ -1416,33 +1416,44 @@ class PokemonBattleAssistant {
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
             // ポケモン名の検索元
-            let names = Object.keys(Pokemon.battleData).slice(0, this.templateLength);
+            // 1) 現シーズンの使用率が高い順
+            // 2) 1)で見つからない場合は、残りのテンプレートを全探索
+            const battleDataNames = Object.keys(Pokemon.battleData)
+                .filter((name) => name in Pokemon.templateFileCode);
+            const highUsageNames = battleDataNames.slice(0, this.templateLength);
+            const remainingBattleDataNames = battleDataNames.slice(this.templateLength);
+            const fallbackTemplateNames = Object.keys(Pokemon.templateFileCode)
+                .filter((name) => !(name in Pokemon.battleData));
+            const candidateNameGroups = [highUsageNames, remainingBattleDataNames.concat(fallbackTemplateNames)];
             let maxCorerlation = 0;
             let mostLikely = '';
             let comparedTemplates = 0;
-            for (let name of names) {
-                try {
-                    const templateCode = Pokemon.templateFileCode[name];
-                    if (!templateCode) {
-                        continue;
+            for (let names of candidateNameGroups) {
+                for (let name of names) {
+                    try {
+                        const templateCode = Pokemon.templateFileCode[name];
+                        if (!templateCode) {
+                            continue;
+                        }
+                        const img = await loadImage(`data/template/${templateCode}.png`);
+                        const dsize = (img.width >= img.height) ?
+                            [Math.max(1, border.w), Math.max(1, Math.trunc(border.w*img.height/img.width))] :
+                            [Math.max(1, Math.trunc(border.h*img.width/img.height)), Math.max(1, border.h)];
+                        this.templCanvas.width = dsize[0];
+                        this.templCanvas.height = dsize[1];
+                        this.templCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height, 0, 0, dsize[0], dsize[1]);
+                        toGrayscale(this.templCanvas);
+                        let result = templateMatch('canvas-trim', 'canvas-template');
+                        comparedTemplates++;
+                        if (maxCorerlation < result.maxVal) {
+                            maxCorerlation = result.maxVal;
+                            mostLikely = name;
+                        }
+                    } catch (e) {
+                        const errorName = e?.name ?? typeof e;
+                        const errorMessage = e?.message ?? String(e);
+                        console.error(`[readEnemy] ${name}: ${errorName}: ${errorMessage}`);
                     }
-                    const img = await loadImage(`data/template/${templateCode}.png`);
-                    const dsize = (img.width >= img.height) ?
-                        [Math.max(1, border.w), Math.max(1, Math.trunc(border.w*img.height/img.width))] :
-                        [Math.max(1, Math.trunc(border.h*img.width/img.height)), Math.max(1, border.h)];
-                    this.templCanvas.width = dsize[0];
-                    this.templCanvas.height = dsize[1];
-                    this.templCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height, 0, 0, dsize[0], dsize[1]);
-                    toGrayscale(this.templCanvas);
-                    let result = templateMatch('canvas-trim', 'canvas-template');
-                    comparedTemplates++;
-                    if (maxCorerlation < result.maxVal) {
-                        maxCorerlation = result.maxVal;
-                        mostLikely = name;
-                    }    
-                } catch (e) {
-                    console.log(name)
-                    console.error(`${e.name}: ${e.message}`);
                 }
             }
             // フォルムチェンジ対応
