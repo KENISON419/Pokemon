@@ -313,16 +313,28 @@ class PokemonBattleAssistant {
         let names = Object.keys(Pokemon.battleData);
         document.querySelectorAll('#balance-check-main .trend').forEach(elem => {
             // ポケモン
-            let name = names.shift();
-            if (name.includes('オーガポン')) {
-                let ability = Pokemon.zukan[name].ability[0];
-                let ind = Pokemon.battleData[name].ability[0].indexOf(ability);
-                if (Pokemon.battleData[name].ability[1][ind] < this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
-                    name = names.shift();
+            let name = '';
+            while (names.length) {
+                name = names.shift();
+                if (!(name in Pokemon.battleData) || !(name in Pokemon.zukan)) { continue; }
+                if (name.includes('オーガポン')) {
+                    let ability = Pokemon.zukan[name].ability[0];
+                    let ind = Pokemon.battleData[name].ability[0].indexOf(ability);
+                    if (Pokemon.battleData[name].ability[1][ind] < this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
+                        continue;
+                    }
                 }
+                if (!Pokemon.battleData[name].item || !Pokemon.battleData[name].Ttype || !Pokemon.battleData[name].move) { continue; }
+                break;
             }
             let elem2 = elem.querySelector('.trend-pokemon')
-            elem2.src = `data/icon/${Pokemon.iconFileCode[name]}.png`;
+            if (!name) {
+                elem.style.display = 'none';
+                return;
+            }
+            elem2.src = (Pokemon.iconFileCode[name])
+                ? `data/icon/${Pokemon.iconFileCode[name]}.png`
+                : `data/item_img/${Pokemon.itemFileCode['モンスターボール']}.png`;
             // 注釈
             setAnnotation(elem2);
             elem2.addEventListener('mousemove', () => {
