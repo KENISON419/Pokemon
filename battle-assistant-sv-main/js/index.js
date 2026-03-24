@@ -67,16 +67,32 @@ class PokemonBattleAssistant {
 
     normalizePokemonName(name) {
         if (name in Pokemon.zukan) { return name; }
-        if (/^\d{1,4}-\d{3}$/.test(name)) {
-            const [dexNo, formNo] = name.split('-').map((s) => String(parseInt(s, 10)));
-            if (dexNo in Pokemon.nameCode) {
+        const matched = String(name).match(/^(\d{1,4})-(\d{1,3})$/);
+        if (matched) {
+            const [, rawDexNo, rawFormNo] = matched;
+            const dexCandidates = Array.from(new Set([
+                rawDexNo,
+                String(parseInt(rawDexNo, 10)),
+                rawDexNo.padStart(3, '0'),
+                rawDexNo.padStart(4, '0'),
+            ]));
+            for (const dexNo of dexCandidates) {
+                if (!(dexNo in Pokemon.nameCode)) { continue; }
                 const codeData = Pokemon.nameCode[dexNo];
-                if (formNo in codeData) {
-                    return codeData[formNo];
+                const formCandidates = Array.from(new Set([
+                    rawFormNo,
+                    String(parseInt(rawFormNo, 10)),
+                    rawFormNo.padStart(3, '0'),
+                    '0',
+                    '000',
+                ]));
+                for (const formNo of formCandidates) {
+                    if (formNo in codeData) {
+                        return codeData[formNo];
+                    }
                 }
-                if ('0' in codeData) {
-                    return codeData['0'];
-                }
+                const firstName = Object.values(codeData)[0];
+                if (firstName) { return firstName; }
             }
         }
         return name;
@@ -536,6 +552,7 @@ class PokemonBattleAssistant {
     }
     // 自分パーティのポケモンの名前を設定する
     setPokemonName(ind, name, keepNickname=false) {
+        name = this.normalizePokemonName(name);
         let inputElement = this.#cbName[ind].comboboxNode;
         let img = document.querySelectorAll('.img-pokemon img')[ind];
         if (!(name in Pokemon.zukan)) {
@@ -703,6 +720,7 @@ class PokemonBattleAssistant {
     }
     // 相手パーティのポケモンの名前を設定する
     setEnemyName(ind, name) {
+        name = this.normalizePokemonName(name);
         let inputElement = document.querySelectorAll('.enemy-name input')[ind];
         let img = document.querySelectorAll('.img-enemy img')[ind];
         if (!(name in Pokemon.zukan)) {
