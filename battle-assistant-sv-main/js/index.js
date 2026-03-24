@@ -1419,21 +1419,23 @@ class PokemonBattleAssistant {
             let names = Object.keys(Pokemon.battleData).slice(0, this.templateLength);
             let maxCorerlation = 0;
             let mostLikely = '';
+            let comparedTemplates = 0;
             for (let name of names) {
                 try {
-                    const img = await loadImage(`data/template/${Pokemon.templateFileCode[name]}.png`);
-                    const dsize = (img.width >= img.height) ?
-                        [border.w, Math.trunc(border.w*img.height/img.width)] :
-                        [Math.trunc(border.h*img.width/img.height), border.h];
-                    // 画像サイズが異なるものをあらかじめ排除する
-                    if (Math.abs(dsize[0]-border.w) > 5 || Math.abs(dsize[1]-border.h) > 5) {
+                    const templateCode = Pokemon.templateFileCode[name];
+                    if (!templateCode) {
                         continue;
-                    } 
+                    }
+                    const img = await loadImage(`data/template/${templateCode}.png`);
+                    const dsize = (img.width >= img.height) ?
+                        [Math.max(1, border.w), Math.max(1, Math.trunc(border.w*img.height/img.width))] :
+                        [Math.max(1, Math.trunc(border.h*img.width/img.height)), Math.max(1, border.h)];
                     this.templCanvas.width = dsize[0];
                     this.templCanvas.height = dsize[1];
                     this.templCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height, 0, 0, dsize[0], dsize[1]);
                     toGrayscale(this.templCanvas);
                     let result = templateMatch('canvas-trim', 'canvas-template');
+                    comparedTemplates++;
                     if (maxCorerlation < result.maxVal) {
                         maxCorerlation = result.maxVal;
                         mostLikely = name;
@@ -1446,6 +1448,15 @@ class PokemonBattleAssistant {
             // フォルムチェンジ対応
             if (mostLikely == 'イルカマン(ナイーブ)') {
                 mostLikely = 'イルカマン(マイティ)';
+            }
+            if (!mostLikely) {
+                if (comparedTemplates == 0) {
+                    console.warn(`Enemy[${i}] skipped: template not compared`);
+                } else {
+                    console.warn(`Enemy[${i}] skipped: no likely candidate`);
+                }
+                document.querySelectorAll('.enemy-name input')[i].style.background = '#ffffff';
+                continue;
             }
             if (this.#enemy[i].name == mostLikely) {
                 // 同じ名前を読んだ時点で自動認識を終了する
