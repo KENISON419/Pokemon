@@ -79,6 +79,7 @@ class PokemonBattleAssistant {
         if (this.#appStorage.includes('template-length')) {
             this.templateLength = this.#appStorage.getItem('template-length');
         }
+        this.templateLength = this.normalizeTemplateLength(this.templateLength);
         if (this.#appStorage.includes('guide-selection')) {
             this.guideSelection = this.#appStorage.getItem('guide-selection');
         }
@@ -131,6 +132,13 @@ class PokemonBattleAssistant {
             }, 1000/this.FPS);        
         });
         this.init();
+    }
+    normalizeTemplateLength(value) {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+            return Object.keys(Pokemon.battleData).length || Object.keys(Pokemon.zukan).length || 300;
+        }
+        return Math.max(1, Math.trunc(parsed));
     }
     // アプリの初期化
     async init() {
@@ -1232,7 +1240,8 @@ class PokemonBattleAssistant {
                 // 相手ポケモンの検索範囲
                 subwin.document.getElementById('template-length').value = this.templateLength;
                 subwin.document.getElementById('template-length').addEventListener('change', event => {
-                    this.templateLength = event.currentTarget.value;
+                    this.templateLength = this.normalizeTemplateLength(event.currentTarget.value);
+                    event.currentTarget.value = this.templateLength;
                     this.save();
                     // 設定が変わったら相手のパーティをクリア
                     if (this.currentPhase() == 'MATCHING') {
@@ -1416,7 +1425,11 @@ class PokemonBattleAssistant {
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
             // ポケモン名の検索元
-            let names = Object.keys(Pokemon.battleData).slice(0, this.templateLength);
+            let names = Object.keys(Pokemon.battleData);
+            if (names.length == 0) {
+                names = Object.keys(Pokemon.zukan);
+            }
+            names = names.slice(0, this.normalizeTemplateLength(this.templateLength));
             let maxCorerlation = 0;
             let mostLikely = '';
             let comparedTemplates = 0;
@@ -1441,8 +1454,8 @@ class PokemonBattleAssistant {
                         mostLikely = name;
                     }    
                 } catch (e) {
-                    console.log(name)
-                    console.error(`${e.name}: ${e.message}`);
+                    const message = (e instanceof Error) ? `${e.name}: ${e.message}` : String(e);
+                    console.error(`Enemy template error [${name}] (code: ${Pokemon.templateFileCode[name]}): ${message}`);
                 }
             }
             // フォルムチェンジ対応

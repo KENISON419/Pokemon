@@ -51,7 +51,10 @@ export async function loadImage(url) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
-        img.onerror = (e) => reject(e);
+        img.onerror = (e) => {
+            const reason = (e && typeof e.type == 'string') ? e.type : 'image load error';
+            reject(new Error(`Failed to load image: ${url} (${reason})`));
+        };
         img.src = url;
     });
 }
