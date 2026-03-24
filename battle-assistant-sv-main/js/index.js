@@ -1422,16 +1422,34 @@ class PokemonBattleAssistant {
             let comparedTemplates = 0;
             for (let name of names) {
                 try {
-                    const templateCode = Pokemon.templateFileCode[name];
-                    if (!templateCode) {
+                    const codeCandidates = Array.from(new Set([
+                        Pokemon.templateFileCode[name],
+                        Pokemon.iconFileCode[name],
+                    ].filter((code) => code)));
+                    if (!codeCandidates.length) {
                         continue;
                     }
-                    const img = await loadImage(`data/template/${templateCode}.png`);
+                    let img;
+                    for (const code of codeCandidates) {
+                        try {
+                            img = await loadImage(`data/template/${code}.png`);
+                            break;
+                        } catch (_error) {
+                            // 次の候補コードで再試行
+                        }
+                    }
+                    if (!img) {
+                        continue;
+                    }
                     const dsize = (img.width >= img.height) ?
-                        [Math.max(1, border.w), Math.max(1, Math.trunc(border.w*img.height/img.width))] :
-                        [Math.max(1, Math.trunc(border.h*img.width/img.height)), Math.max(1, border.h)];
-                    this.templCanvas.width = dsize[0];
-                    this.templCanvas.height = dsize[1];
+                        [border.w, Math.trunc(border.w*img.height/img.width)] :
+                        [Math.trunc(border.h*img.width/img.height), border.h];
+                    // 画像サイズが異なるものをあらかじめ排除する
+                    if (Math.abs(dsize[0]-border.w) > 5 || Math.abs(dsize[1]-border.h) > 5) {
+                        continue;
+                    }
+                    this.templCanvas.width = Math.max(1, dsize[0]);
+                    this.templCanvas.height = Math.max(1, dsize[1]);
                     this.templCanvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height, 0, 0, dsize[0], dsize[1]);
                     toGrayscale(this.templCanvas);
                     let result = templateMatch('canvas-trim', 'canvas-template');
@@ -1439,10 +1457,10 @@ class PokemonBattleAssistant {
                     if (maxCorerlation < result.maxVal) {
                         maxCorerlation = result.maxVal;
                         mostLikely = name;
-                    }    
+                    }
                 } catch (e) {
-                    console.log(name)
-                    console.error(`${e.name}: ${e.message}`);
+                    const message = e && e.message ? e.message : String(e);
+                    console.warn(`Enemy template load failed: ${name} (${message})`);
                 }
             }
             // フォルムチェンジ対応
@@ -1450,11 +1468,7 @@ class PokemonBattleAssistant {
                 mostLikely = 'イルカマン(マイティ)';
             }
             if (!mostLikely) {
-                if (comparedTemplates == 0) {
-                    console.warn(`Enemy[${i}] skipped: template not compared`);
-                } else {
-                    console.warn(`Enemy[${i}] skipped: no likely candidate`);
-                }
+                console.warn(`Enemy[${i}] read failed: compared=${comparedTemplates}`);
                 document.querySelectorAll('.enemy-name input')[i].style.background = '#ffffff';
                 continue;
             }
