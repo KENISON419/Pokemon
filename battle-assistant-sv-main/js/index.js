@@ -1422,7 +1422,7 @@ class PokemonBattleAssistant {
             let comparedTemplates = 0;
             for (let name of names) {
                 try {
-                    const templateCode = Pokemon.templateFileCode[name];
+                    const templateCode = Pokemon.templateFileCode[name] || Pokemon.iconFileCode[name];
                     if (!templateCode) {
                         continue;
                     }
@@ -1439,10 +1439,10 @@ class PokemonBattleAssistant {
                     if (maxCorerlation < result.maxVal) {
                         maxCorerlation = result.maxVal;
                         mostLikely = name;
-                    }    
+                    }
                 } catch (e) {
-                    console.log(name)
-                    console.error(`${e.name}: ${e.message}`);
+                    const message = e && e.message ? e.message : String(e);
+                    console.warn(`Enemy template load failed: ${name} (${message})`);
                 }
             }
             // フォルムチェンジ対応
@@ -1450,11 +1450,7 @@ class PokemonBattleAssistant {
                 mostLikely = 'イルカマン(マイティ)';
             }
             if (!mostLikely) {
-                if (comparedTemplates == 0) {
-                    console.warn(`Enemy[${i}] skipped: template not compared`);
-                } else {
-                    console.warn(`Enemy[${i}] skipped: no likely candidate`);
-                }
+                console.warn(`Enemy[${i}] read failed: compared=${comparedTemplates}`);
                 document.querySelectorAll('.enemy-name input')[i].style.background = '#ffffff';
                 continue;
             }
