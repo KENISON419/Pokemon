@@ -1503,6 +1503,8 @@ class PokemonBattleAssistant {
                 this.setEnemyName(i, mostLikely);
                 this.save();
                 console.log(`Enemy : ${mostLikely}`);
+                // 一度認識した枠は再認識で上書きしない（2周目以降の誤認識防止）
+                this.recognizeEnemy[i] = false;
             }
             document.querySelectorAll('.enemy-name input')[i].style.background = '#ffffff';
         }
