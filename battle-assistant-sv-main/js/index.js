@@ -1416,7 +1416,12 @@ class PokemonBattleAssistant {
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
             // ポケモン名の検索元
-            let names = Object.keys(Pokemon.battleData).slice(0, this.templateLength);
+            let names = Object.keys(Pokemon.battleData)
+                .filter((name) => name in Pokemon.templateFileCode)
+                .slice(0, this.templateLength);
+            if (!names.length) {
+                names = Object.keys(Pokemon.templateFileCode).slice(0, this.templateLength);
+            }
             let maxCorerlation = 0;
             let mostLikely = '';
             for (let name of names) {
