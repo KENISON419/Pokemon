@@ -80,6 +80,7 @@ export class Pokemon {
     static zukan = {};
     static zukanName = {}; // key: ポケモン表示名, value: 図鑑登録名
     static formDiff = {}; // key: ポケモン表示名, value: フォルム違いの差分
+    static nameAlias = {}; // key: 別名(図鑑番号など), value: 図鑑登録名
     static battleData = {}; // ランクマッチの統計データ
 
     static typeFileCode = {}; // タイプ画像のデコード表
@@ -119,7 +120,7 @@ export class Pokemon {
     static multiScales = ['マルチスケイル','ファントムガード','テラスシェル']
 
     constructor(name='') {
-        this.name = name;
+        this.name = Pokemon.resolveName(name);
         this.nickname = '';
         this.displayName = ''; // 表示名
         this.level = 50;
@@ -265,6 +266,13 @@ export class Pokemon {
                 const name = words[1];
                 if (name == undefined || name == '') { break; }
                 Pokemon.zukan[name] = {};
+                const num = words[0];
+                if (num) {
+                    const [baseNum, formNum='0'] = num.split('-');
+                    const key = `${baseNum}-${formNum.padStart(3, '0')}`;
+                    Pokemon.nameAlias[num] = name;
+                    Pokemon.nameAlias[key] = name;
+                }
                 Pokemon.zukan[name]['type'] = words.slice(2,4).filter(function(s) { return s != '-'; });
                 Pokemon.zukan[name]['ability'] = words.slice(4,8).filter(function(s) { return s != '-'; });
                 Pokemon.zukan[name]['base'] = words.slice(8,14).map((s) => Number(s));
@@ -785,6 +793,21 @@ export class Pokemon {
             if (distance == 0) break;
         }
         return result;
+    }
+    // 図鑑登録名に正規化する
+    static resolveName(name='') {
+        if (!name) { return ''; }
+        const normalized = String(name).trim();
+        if (normalized in Pokemon.zukan) { return normalized; }
+        if (normalized in Pokemon.nameAlias) { return Pokemon.nameAlias[normalized]; }
+        if (/^\d{1,4}-\d{1,3}$/.test(normalized)) {
+            const [baseNum, formNum] = normalized.split('-');
+            const key = `${Number(baseNum)}-${formNum.padStart(3, '0')}`;
+            if (key in Pokemon.nameAlias) {
+                return Pokemon.nameAlias[key];
+            }
+        }
+        return normalized;
     }
     // ダメージを与える技ならtrueを返す
     static isDamageMove(move) {
