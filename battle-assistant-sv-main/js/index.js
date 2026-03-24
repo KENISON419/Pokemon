@@ -1441,8 +1441,10 @@ class PokemonBattleAssistant {
                         mostLikely = name;
                     }    
                 } catch (e) {
-                    console.log(name)
-                    console.error(`${e.name}: ${e.message}`);
+                    console.log(name);
+                    const errorName = e?.name ?? 'Error';
+                    const errorMessage = e?.message ?? String(e ?? 'Unknown error');
+                    console.error(`Enemy template load failed (${name}/${templateCode}): ${errorName}: ${errorMessage}`);
                 }
             }
             // フォルムチェンジ対応
