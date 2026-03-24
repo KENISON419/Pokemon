@@ -347,10 +347,14 @@ class PokemonBattleAssistant {
                 });
                 document.getElementById('annotation').innerHTML = annotation.join('<br>');
             });
+            let itemNames = (Array.isArray(Pokemon.battleData[name].item) && Array.isArray(Pokemon.battleData[name].item[0]))
+                ? Pokemon.battleData[name].item[0] : [];
+            let itemRates = (Array.isArray(Pokemon.battleData[name].item) && Array.isArray(Pokemon.battleData[name].item[1]))
+                ? Pokemon.battleData[name].item[1] : [];
             // 持ち物
             elem.querySelectorAll('.trend-item1, .trend-item2, .trend-item3').forEach((elem2, i) => {
-                if (i < Pokemon.battleData[name].item[0].length && Pokemon.battleData[name].item[1][i] >= this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
-                    elem2.src = `data/item_img/${Pokemon.itemFileCode[Pokemon.battleData[name].item[0][i]]}.png`;
+                if (i < itemNames.length && itemRates[i] >= this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
+                    elem2.src = `data/item_img/${Pokemon.itemFileCode[itemNames[i]]}.png`;
                     elem2.style.opacity = 1;
                 } else {
                     elem2.src = '';
@@ -359,15 +363,19 @@ class PokemonBattleAssistant {
                 // 注釈
                 setAnnotation(elem2);
                 elem2.addEventListener('mousemove', () => {
-                    let annotation = `${Math.trunc(Pokemon.battleData[name].item[1][i])}%`;
+                    let annotation = (i < itemRates.length) ? `${Math.trunc(itemRates[i])}%` : '-';
                     document.getElementById('annotation').innerHTML = annotation;
                 });
             });
+            let ttypeNames = (Array.isArray(Pokemon.battleData[name].Ttype) && Array.isArray(Pokemon.battleData[name].Ttype[0]))
+                ? Pokemon.battleData[name].Ttype[0] : [];
+            let ttypeRates = (Array.isArray(Pokemon.battleData[name].Ttype) && Array.isArray(Pokemon.battleData[name].Ttype[1]))
+                ? Pokemon.battleData[name].Ttype[1] : [];
             // テラスタイプ
             elem.querySelectorAll('.trend-Ttype1, .trend-Ttype2, .trend-Ttype3').forEach((elem2, i) => {
                 setAnnotation(elem2);
-                if (i < Pokemon.battleData[name].Ttype[0].length && Pokemon.battleData[name].Ttype[1][i] >= this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
-                    elem2.src = `data/type_img/${Pokemon.typeFileCode[Pokemon.battleData[name].Ttype[0][i]]}.png`;
+                if (i < ttypeNames.length && ttypeRates[i] >= this.MIN_ITEM_TTYPE_ADOPTION_RATE) {
+                    elem2.src = `data/type_img/${Pokemon.typeFileCode[ttypeNames[i]]}.png`;
                     elem2.style.opacity = 1;
                 } else {
                     elem2.src = '';
@@ -376,7 +384,7 @@ class PokemonBattleAssistant {
                 // 注釈
                 setAnnotation(elem2);
                 elem2.addEventListener('mousemove', () => {
-                    let annotation = `${Math.trunc(Pokemon.battleData[name].Ttype[1][i])}%`;
+                    let annotation = (i < ttypeRates.length) ? `${Math.trunc(ttypeRates[i])}%` : '-';
                     document.getElementById('annotation').innerHTML = annotation;
                 });
             });
