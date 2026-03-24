@@ -1406,8 +1406,7 @@ class PokemonBattleAssistant {
     // 相手パーティを読み取る
     async readEnemy() {
         const templateLength = Math.max(1, Number.parseInt(this.templateLength, 10) || 300);
-        const usageRankedNames = Object.keys(Pokemon.battleData)
-            .filter((name) => name in Pokemon.templateFileCode);
+        const usageRankedNames = Object.keys(Pokemon.battleData);
         const fallbackNames = Object.keys(Pokemon.templateFileCode)
             .filter((name) => !(name in Pokemon.battleData));
         const names = usageRankedNames.concat(fallbackNames).slice(0, templateLength);
@@ -1426,7 +1425,13 @@ class PokemonBattleAssistant {
             let comparedTemplates = 0;
             for (let name of names) {
                 try {
-                    const templateCode = Pokemon.templateFileCode[name];
+                    let templateCode = Pokemon.templateFileCode[name];
+                    if (!templateCode && name in Pokemon.zukan) {
+                        templateCode = Pokemon.templateFileCode[Pokemon.zukan[name].displayName];
+                    }
+                    if (!templateCode && name.includes('(')) {
+                        templateCode = Pokemon.templateFileCode[name.split('(')[0]];
+                    }
                     if (!templateCode) {
                         continue;
                     }
