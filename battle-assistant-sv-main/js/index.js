@@ -1416,13 +1416,7 @@ class PokemonBattleAssistant {
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
             // ポケモン名の検索元
-            let names = (Pokemon.battleDataOrder.length ? Pokemon.battleDataOrder : Object.keys(Pokemon.battleData)).filter((name) =>
-                Pokemon.templateFileCode[name] || Pokemon.iconFileCode[name]
-            );
-            if (!names.length) {
-                names = Object.keys(Pokemon.templateFileCode);
-            }
-            names = names.slice(0, this.templateLength);
+            let names = Object.keys(Pokemon.battleData).slice(0, this.templateLength);
             let maxCorerlation = 0;
             let mostLikely = '';
             let comparedTemplates = 0;
@@ -1470,7 +1464,7 @@ class PokemonBattleAssistant {
                 mostLikely = 'イルカマン(マイティ)';
             }
             if (!mostLikely) {
-                console.warn(`Enemy[${i}] read failed: compared=${comparedTemplates}, candidates=${names.length}`);
+                console.warn(`Enemy[${i}] read failed: compared=${comparedTemplates}`);
                 document.querySelectorAll('.enemy-name input')[i].style.background = '#ffffff';
                 continue;
             }
