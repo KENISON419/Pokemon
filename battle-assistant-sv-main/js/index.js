@@ -1405,6 +1405,16 @@ class PokemonBattleAssistant {
     */
     // 相手パーティを読み取る
     async readEnemy() {
+        const parseTemplateLength = Number.parseInt(this.templateLength, 10);
+        const templateLength = (Number.isFinite(parseTemplateLength) && parseTemplateLength > 0) ?
+            parseTemplateLength : 300;
+        // シーズン使用率順で探索し、必要ならbattleDataのキーで補完する
+        const usageOrderedNames = (Pokemon.battleDataOrder.length > 0) ?
+            Pokemon.battleDataOrder : Object.keys(Pokemon.battleData);
+        const names = usageOrderedNames
+            .concat(Object.keys(Pokemon.battleData))
+            .filter((name, ind, arr) => arr.indexOf(name) == ind)
+            .slice(0, templateLength);
         for (let i=0; i<6; i++) {
             if (!this.recognizeEnemy[i] || this.currentPhase() != 'MATCHING') {
                 continue;
@@ -1415,8 +1425,6 @@ class PokemonBattleAssistant {
             const border = rectBorder(this.trimCanvas, this.ENEMY_ICON_TRIM_BORDER);
             trim(this.captureCanvas, this.trimCanvas, trimRange.x+border.x, trimRange.y+border.y, border.w, border.h);
             toGrayscale(this.trimCanvas);
-            // ポケモン名の検索元
-            let names = Object.keys(Pokemon.battleData).slice(0, this.templateLength);
             let maxCorerlation = 0;
             let mostLikely = '';
             let comparedTemplates = 0;
@@ -1441,8 +1449,8 @@ class PokemonBattleAssistant {
                         mostLikely = name;
                     }    
                 } catch (e) {
-                    console.log(name)
-                    console.error(`${e.name}: ${e.message}`);
+                    console.warn(`Enemy template match failed: ${name}`);
+                    console.error(e);
                 }
             }
             // フォルムチェンジ対応
